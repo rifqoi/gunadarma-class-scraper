@@ -3,6 +3,8 @@ import pandas as pd
 from pandas.core.frame import collections
 from pandas.io.api import ExcelWriter
 import requests
+import os
+import shutil
 
 from bs4 import BeautifulSoup
 
@@ -55,48 +57,52 @@ def scrape_schedule(kelas: str):
             if len(tds) < 1:
                 continue
 
+            jadwal_str = tds[3].text
+            current_kelas = tds[0].text
+            lokasi = tds[4].text
+
             if tds[1].text.strip() == "Senin":
                 parse_date(
-                    tds[3].text,
+                    jadwal_str,
                     senin,
-                    tds[0].text,
-                    tds[4].text,
+                    current_kelas,
+                    lokasi,
                 )
 
             if tds[1].text.strip() == "Selasa":
                 parse_date(
-                    tds[3].text,
+                    jadwal_str,
                     selasa,
-                    tds[0].text,
-                    tds[4].text,
+                    current_kelas,
+                    lokasi,
                 )
             if tds[1].text.strip() == "Rabu":
                 parse_date(
-                    tds[3].text,
+                    jadwal_str,
                     rabu,
-                    tds[0].text,
-                    tds[4].text,
+                    current_kelas,
+                    lokasi,
                 )
             if tds[1].text.strip() == "Kamis":
                 parse_date(
-                    tds[3].text,
+                    jadwal_str,
                     kamis,
-                    tds[0].text,
-                    tds[4].text,
+                    current_kelas,
+                    lokasi,
                 )
             if tds[1].text.strip() == "Jum'at":
                 parse_date(
-                    tds[3].text,
+                    jadwal_str,
                     jumat,
-                    tds[0].text,
-                    tds[4].text,
+                    current_kelas,
+                    lokasi,
                 )
             if tds[1].text.strip() == "Sabtu":
                 parse_date(
-                    tds[3].text,
+                    jadwal_str,
                     sabtu,
-                    tds[0].text,
-                    tds[4].text,
+                    current_kelas,
+                    lokasi,
                 )
     return senin, selasa, rabu, kamis, jumat, sabtu
 
@@ -117,6 +123,7 @@ def create_sheet(xlwriter: ExcelWriter, hari_dict: dict, sheet_name: str):
     print(new_order)
     df = df.reindex(new_order, axis=1)
     print(df)
+
     df.to_excel(xlwriter, sheet_name=sheet_name, index=False)
 
 
@@ -124,7 +131,8 @@ def read_to_excel(kelas: str):
     senin, selasa, rabu, kamis, jumat, sabtu = scrape_schedule(kelas)
     __import__("pprint").pprint(senin)
 
-    with pd.ExcelWriter(f"Jadwal_{kelas}_Depok.xlsx") as xlwriter:
+    os.makedirs("output", exist_ok=True)
+    with pd.ExcelWriter(f"output/Jadwal_{kelas}_Depok.xlsx") as xlwriter:
         create_sheet(xlwriter, senin, "Senin")
         create_sheet(xlwriter, selasa, "Selasa")
         create_sheet(xlwriter, rabu, "Rabu")
